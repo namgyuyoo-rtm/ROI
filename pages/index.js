@@ -11,9 +11,11 @@ import {
   Title,
   Tooltip,
   Legend,
+  LineController,
+  BarController,
 } from 'chart.js';
 
-// Register Chart.js components
+// Register Chart.js components including controllers
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -22,7 +24,9 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  LineController,
+  BarController
 );
 
 // --- Constants & Defaults ---
