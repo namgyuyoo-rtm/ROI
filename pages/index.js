@@ -250,6 +250,9 @@ function calculateInspectionROI({
 export default function RoiCalculatorPage() {
   const [view, setView] = useState('form'); // 'form' or 'results'
 
+  // Chart reference
+  const chartRef = useRef(null);
+
   // --- Input State ---
   // Store raw values for calculation, formatted strings for display
   const [annualRevenueEok, setAnnualRevenueEok] = useState(String(DEFAULT_ANNUAL_REVENUE_Eok));
@@ -285,6 +288,27 @@ export default function RoiCalculatorPage() {
     }
   }, [personnelCount, targetPersonnel]); // Rerun when personnelCount changes
 
+  // --- Effect for chart cleanup to prevent DOM errors ---
+  useEffect(() => {
+    // Cleanup function to handle chart destruction
+    return () => {
+      if (chartRef.current && chartRef.current.chartInstance) {
+        chartRef.current.chartInstance.destroy();
+      }
+    };
+  }, []);
+
+  // Handle view change with cleanup
+  const handleViewChange = (newView) => {
+    // Clean up chart if it exists when going from results to form
+    if (view === 'results' && newView === 'form' && chartRef.current) {
+      if (chartRef.current.chartInstance) {
+        chartRef.current.chartInstance.destroy();
+      }
+    }
+    setView(newView);
+  };
+
   // --- Calculation Trigger ---
   const handleCalculate = useCallback(() => {
     const params = {
@@ -299,7 +323,8 @@ export default function RoiCalculatorPage() {
     };
     const calcResults = calculateInspectionROI(params);
     setResults(calcResults);
-    setView('results');
+    // Use the handleViewChange function that handles cleanup
+    handleViewChange('results');
   }, [
       personnelCount, salaryMil, annualRevenueEok, equipmentUnits, reuseOptical,
       misdetectReduction, qualityDefectReduction, targetPersonnel
@@ -648,7 +673,13 @@ export default function RoiCalculatorPage() {
         <>
           {/* --- Back Button --- */}
           <div id="backButtonContainer" className="mb-4">
-            <button type="button" className="btn btn-secondary" onClick={() => setView('form')}>&laquo; 다시 분석하기 (입력 수정)</button>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => handleViewChange('form')}
+            >
+              &laquo; 다시 분석하기 (입력 수정)
+            </button>
           </div>
 
           {/* --- Variable Sliders Section --- */}
@@ -773,7 +804,13 @@ export default function RoiCalculatorPage() {
              {/* Chart Container */}
               <div className="mb-5" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '15px', backgroundColor: '#f9f9f9' }}>
                   <div style={{ height: '450px', width: '100%', position: 'relative' }}>
-                      {chartData && chartOptions && <Bar data={chartData} options={chartOptions} />}
+                      {chartData && chartOptions && (
+                        <Bar 
+                          ref={chartRef}
+                          data={chartData} 
+                          options={chartOptions} 
+                        />
+                      )}
                   </div>
               </div>
 
