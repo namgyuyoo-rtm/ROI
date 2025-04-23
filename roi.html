@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 품질검사 ROI 분석기 (표준 모델)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 20px;
+      padding-bottom: 40px;
+    }
+    .container {
+      max-width: 800px;
+    }
+    input[type="range"] {
+      padding: 0;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef; /* Solid background color */
+      border-radius: 4px;
+    }
+    input[type="range"]::-moz-range-track {
+       width: 100%;
+       height: 8px;
+       background: #e9ecef; /* Solid background color */
+       border-radius: 4px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #0d6efd;
+      border-radius: 50%;
+      margin-top: -6px;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #0d6efd;
+      border-radius: 50%;
+      border: none;
+    }
+    .calculated-value {
+        font-size: 0.9em;
+    }
+    .form-text {
+        font-size: 0.85em;
+    }
+    h2, h3, h4 {
+        margin-top: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    h4.mb-3 {
+        margin-bottom: 1.5rem !important;
+    }
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .result-item:last-child {
+        border-bottom: none;
+    }
+    .result-item span {
+        font-weight: bold;
+    }
+    table {
+        font-size: 0.9em;
+    }
+    th, td {
+        vertical-align: middle;
+    }
+    .input-group-text {
+        min-width: 50px;
+        justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="text-center mb-4">
+        <h2>AI 품질검사 ROI 분석기 (표준 모델)</h2>
+        <p class="lead">표준화된 제조업 모델을 기반으로 AI 도입 경제성을 분석합니다.</p>
+        <p class="text-muted">아래 항목을 입력하고 분석하기 버튼을 누르세요. (기본값 제공)</p>
+    </header>
+
+    <form id="roiForm" class="mb-5">
+      <h4 class="mb-3">1. 기업 기본 정보</h4>
+      <div class="row g-3 mb-3">
+         <div class="col-md-6">
+            <label for="annualRevenue" class="form-label">연 매출액</label>
+             <div class="input-group">
+                 <input type="text" class="form-control" id="annualRevenue" value="30">
+                 <span class="input-group-text">억원</span>
+             </div>
+             <div class="form-text">품질 관련 비용 추정을 위한 기준 매출액 (단위: 억원). (기본값: 30억원)</div>
+        </div>
+        <div class="col-md-6">
+            <label for="personnelCountInput" class="form-label">현재 검사 인력 수</label>
+             <div class="input-group">
+                 <input type="text" class="form-control" id="personnelCountInput" value="3">
+                 <span class="input-group-text">명</span>
+             </div>
+             <div class="form-text">현재 육안 검사 인력 수.</div>
+        </div>
+      </div>
+      
+      <div class="row g-3 mb-3">
+         <div class="col-md-6">
+            <label for="salaryInput" class="form-label">평균 연봉</label>
+             <div class="input-group">
+                 <input type="text" class="form-control" id="salaryInput" value="25">
+                 <span class="input-group-text">백만원</span>
+             </div>
+             <div class="form-text">검사 인력 1인당 평균 연봉 (단위: 백만원). (기본값: 25백만원)</div>
+        </div>
+      </div>
+
+      <h4 class="mb-3">2. AI 시스템 도입 규모</h4>
+      <div class="row g-3 mb-3">
+          <div class="col-md-6">
+              <label for="equipmentUnits" class="form-label">AI 도입 장비 대수(검사 라인 수)</label>
+              <input type="text" class="form-control" id="equipmentUnits" value="2">
+              <div class="form-text">도입할 AI 검사 장비 또는 시스템의 총 수량. (기본값: 2대)</div>
+          </div>
+           <div class="col-md-6 align-self-center">
+               <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" value="" id="reuseOpticalCheckbox">
+                  <label class="form-check-label" for="reuseOpticalCheckbox">
+                      기존 광학장비 활용 (미활용시 비용 추가)
+    </label>
+                  <div class="form-text mt-0">체크 해제 시, 신규 광학장비 비용(4,000만원/대)이 초기 투자비에 추가됩니다.</div>
+              </div>
+          </div>
+      </div>
+
+
+
+      <div class="d-grid gap-2 mt-4">
+        <button type="button" class="btn btn-primary btn-lg" onclick="calculateROI()">경제성 분석하기</button>
+      </div>
+  </form>
+
+    <!-- Moved Variable Sliders Section -->
+    <div id="variableSlidersSection" style="display:none;" class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0" style="border-bottom: none; margin-top: 0;">주요 변수 조정</h4>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#sliderCollapse" aria-expanded="false" aria-controls="sliderCollapse">
+          보기/숨기기
+        </button>
+      </div>
+      <p class="text-muted mb-3"><em>{아래 변수를 조정하여 AI 도입 효과를 다양한 시나리오에서 분석할 수 있습니다.}</em></p>
+      
+      <div class="collapse" id="sliderCollapse">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="misdetectReductionSlider" class="form-label">오감지율 개선 효과 (%)</label>
+                <div class="d-flex align-items-center">
+                  <input type="range" class="form-range me-2" id="misdetectReductionSlider" min="0" max="100" value="80" list="misdetectTicks">
+                  <span id="misdetectReductionValue" class="badge bg-primary">80%</span>
+                </div>
+                <datalist id="misdetectTicks">
+                  <option value="80" label="기본값"></option>
+                </datalist>
+                <div class="form-text">RTM 자체 분석 결과 평균 개선율 반영</div>
+              </div>
+               <div class="col-md-6">
+                <label for="qualityDefectReductionSlider" class="form-label">품질/불량 개선 효과 (%)</label>
+                <div class="d-flex align-items-center">
+                  <input type="range" class="form-range me-2" id="qualityDefectReductionSlider" min="0" max="100" value="90" list="qualityTicks">
+                  <span id="qualityDefectReductionValue" class="badge bg-primary">90%</span>
+                </div>
+                <datalist id="qualityTicks">
+                  <option value="90" label="기본값"></option>
+                </datalist>
+                <div class="form-text">RTM 자체 분석 결과 평균 개선율 반영</div>
+              </div>
+            </div>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="targetPersonnelSlider" class="form-label">AI 도입 후 인력 수 (명)</label>
+                <div class="d-flex align-items-center">
+                  <input type="range" class="form-range me-2" id="targetPersonnelSlider" min="0" max="5" value="1" step="1" list="personnelTicks">
+                  <span id="targetPersonnelValue" class="badge bg-primary">1명</span>
+                </div>
+                <datalist id="personnelTicks">
+                  <option value="1" label="기본값"></option>
+                </datalist>
+              </div>
+            </div>
+             <!-- Removed Recalculate Button -->
+          </div>
+        </div>
+        <!-- Removed duplicate card below -->
+      </div>
+    </div>
+
+    <div class="alert alert-success mb-4" id="resultBox" style="display:none">
+      <h3 class="alert-heading">분석 결과 요약</h3>
+      <p id="roiSummaryParagraph" class="alert alert-light mt-3" style="display:none;">
+        분석 결과, AI 비전 시스템 도입 시 다음과 같은 비즈니스 효과가 예상됩니다:
+        <br>1) 품질 검사 정확도 <strong>15-20% 개선</strong> 및 검사 속도 <strong>최대 300% 향상</strong>
+        <br>2) 연간 운영 비용 <strong><span id="summaryCostReductionPercent"></span>%</strong> 절감
+        <br>3) 인력 운영 효율화 및 고부가가치 업무 전환 가능
+        <br>4) 초기 투자비용 회수 기간: <strong><span id="summaryMonths"></span>개월</strong>
+        <br><em>(상세 비용 분석은 아래 표를 참고하세요)</em>
+    </p>
+       <div class="result-item">
+          <p class="mb-0"><strong>초기 투자 비용 총액:</strong></p>
+          <span id="summaryInitialCost"></span>
+      </div>
+      <div class="result-item">
+          <p class="mb-0"><strong>연간 절감액 (첫해):</strong></p>
+          <span id="summarySavingsY1"></span>
+      </div>
+       <div class="result-item">
+          <p class="mb-0"><strong>연간 절감액 (2년차 이후):</strong></p>
+          <span id="summarySavingsY2plus"></span>
+      </div>
+      <div class="result-item">
+          <p class="mb-0"><strong>ROI 회수 기간:</strong></p>
+          <span id="summaryRoiPeriod"></span>
+      </div>
+       <div class="result-item">
+          <p class="mb-0"><strong>5년 총 소유 비용(TCO) 절감액:</strong> <sup><a href="#" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" title="TCO 설명" data-bs-content="TCO (Total Cost of Ownership): 5년간의 총 운영 비용 비교 (초기투자 + 운영비 + 유지보수). AI 도입 시나리오에서는 첫 해 유지보수 비용은 제외됩니다.">?</a></sup></p>
+          <span id="summaryTcoSavingsAbs"></span>
+      </div>
+       <div class="result-item">
+          <p class="mb-0"><strong>5년 총 소유 비용(TCO) 절감률:</strong> <sup><a href="#" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" title="TCO 설명" data-bs-content="TCO (Total Cost of Ownership): 5년간의 총 운영 비용 비교 (초기투자 + 운영비 + 유지보수). AI 도입 시나리오에서는 첫 해 유지보수 비용은 제외됩니다.">?</a></sup></p>
+          <span id="summaryTcoSavingsPerc"></span>
+      </div>
+    </div>
+
+
+
+    <div id="analysisSection41" style="margin-top: 0; margin-bottom: 2rem; display:none; border: 1px solid #cfe2ff; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+      <h3 style="border-bottom: none; margin-top: 0;">상세 비용 분석 (5년 기준)</h3>
+      <p class="text-muted"><em>{참고: 아래 표는 입력된 정보를 바탕으로 표준 절감률 가정을 적용하여 계산된 상세 내역입니다.}</em></p>
+      
+      <!-- Add detailed analysis paragraph -->
+      <p id="analysis" class="alert alert-info mb-4" style="display:none;"></p>
+    <!-- Chart Container -->
+    <div class="mb-5" style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; background-color: #f9f9f9;">
+        <div style="height: 450px; width: 100%; position: relative;">
+            <canvas id="costChart"></canvas>
+        </div>
+        </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>항목</th>
+              <th>기존 연간 비용</th>
+              <th>AI 도입 후 연간 비용</th>
+              <th>연간 절감액</th>
+              <th>증감율</th>
+              <th>비고/산정 기준</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>검사 인력 운영비</td>
+              <td id="td-current-labor">-</td>
+              <td id="td-ai-labor">-</td>
+              <td id="td-labor-savings">-</td>
+              <td id="td-labor-change-perc">- %</td>
+              <td id="td-labor-remarks">인건비 × 인원수</td>
+            </tr>
+             <tr>
+              <td>교육 및 관리 비용</td>
+              <td id="td-current-training">-</td>
+              <td id="td-ai-training">-</td>
+              <td id="td-training-savings">-</td>
+              <td id="td-training-change-perc">- %</td>
+               <td id="td-training-remarks">인건비의 10% 기준</td>
+            </tr>
+             <tr>
+              <td>과검출 비용 (매출의 5%)</td>
+              <td id="td-current-misdetection">-</td>
+              <td id="td-ai-misdetection">-</td>
+              <td id="td-misdetection-savings">-</td>
+              <td id="td-misdetection-change-perc">- %</td>
+               <td id="td-misdetect-remarks">연 매출액의 5%</td>
+            </tr>
+             <tr>
+              <td>품질관리/불량처리 비용 (매출의 5%)</td>
+              <td id="td-current-quality">-</td>
+              <td id="td-ai-quality">-</td>
+              <td id="td-quality-savings">-</td>
+              <td id="td-quality-change-perc">- %</td>
+               <td id="td-quality-remarks">연 매출액의 5%</td>
+            </tr>
+             <tr class="table-group-divider">
+              <td><strong>운영 비용 소계</strong></td>
+              <td id="td-current-op-total"><strong>-</strong></td>
+              <td id="td-ai-op-total"><strong>-</strong></td>
+              <td id="td-op-savings-total"><strong>-</strong></td>
+              <td id="td-op-change-perc">- %</td>
+               <td></td>
+            </tr>
+            <tr>
+              <td>연간 유지보수 비용 (2년차 부터)</td>
+              <td id="td-current-maintenance">-</td>
+              <td id="td-ai-maintenance">-</td>
+              <td id="td-maintenance-savings">-</td>
+              <td>N/A</td>
+              <td id="td-maintenance-remarks">초기 도입비용의 10% 적용</td>
+            </tr>
+            <tr class="table-info">
+                <td><strong>총 연간 비용 (첫해)</strong></td>
+                <td id="td-current-total-y1"><strong>-</strong></td>
+                <td id="td-ai-total-y1"><strong>-</strong></td>
+                <td id="td-netsavings-y1"><strong>-</strong></td>
+                <td id="td-total-y1-change-perc">- %</td>
+                 <td></td>
+            </tr>
+             <tr class="table-info">
+                <td><strong>총 연간 비용 (2년차+)</strong></td>
+                 <td id="td-current-total-y2"><strong>-</strong></td>
+                 <td id="td-ai-total-y2"><strong>-</strong></td>
+                <td id="td-netsavings-y2"><strong>-</strong></td>
+                <td id="td-total-y2-change-perc">- %</td>
+                 <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    // --- Constants & Defaults ---
+    // Chart reference - declare it at the top level
+    let costChart = null;
+    
+    // These are now mostly handled by the calculateInspectionROI function defaults,
+    // but we keep DOM element IDs and maybe input defaults here.
+    const DEFAULT_ANNUAL_REVENUE = 3000000000; // Keep this in Won
+    const DEFAULT_PERSONNEL_COUNT = 3;
+    const DEFAULT_EQUIPMENT_UNITS = 2;
+    const DEFAULT_REUSE_OPTICAL = false; // Default is NEW optical needed
+    const TARGET_AI_PERSONNEL = 1; // Define the target number of AI personnel
+
+    // --- Get Elements ---
+    const annualRevenueInput = document.getElementById('annualRevenue');
+    const personnelCountInput = document.getElementById('personnelCountInput');
+    const salaryInput = document.getElementById('salaryInput');
+    const equipmentUnitsInput = document.getElementById('equipmentUnits');
+    const reuseOpticalCheckbox = document.getElementById('reuseOpticalCheckbox');
+    
+    function formatWon(num, showUnit = true) {
+       if (!isFinite(num) || isNaN(num)) {
+         return showUnit ? '0 원' : '0';
+       }
+       const formatted = new Intl.NumberFormat('ko-KR').format(Math.round(num));
+       return showUnit ? formatted + ' 원' : formatted;
+    }
+
+    function formatInputNumber(inputElement) {
+        let originalCursorPos = inputElement.selectionStart;
+        let value = inputElement.value;
+        let originalLength = value.length;
+        let originalCommas = (value.match(/,/g) || []).length;
+
+        let numberString = value.replace(/[^\d]/g, '');
+        if (numberString.length === 0) {
+            inputElement.value = '';
+            return;
+        }
+        let num = parseInt(numberString);
+        if (isNaN(num)) {
+             inputElement.value = '';
+             return;
+        }
+        let formatted = new Intl.NumberFormat('en-US').format(num);
+        inputElement.value = formatted;
+
+        let newLength = formatted.length;
+        let newCommas = (formatted.match(/,/g) || []).length;
+        let commaDifference = newCommas - originalCommas;
+        let newCursorPos = originalCursorPos + commaDifference;
+        if (originalCursorPos === originalLength) {
+             newCursorPos = newLength;
+        }
+        newCursorPos = Math.max(0, Math.min(newLength, newCursorPos));
+        inputElement.setSelectionRange(newCursorPos, newCursorPos);
+    }
+
+    function unformatNumber(formattedString) {
+        if (typeof formattedString !== 'string') {
+            formattedString = String(formattedString);
+        }
+        return formattedString.replace(/,/g, '');
+    }
+
+    reuseOpticalCheckbox.checked = !DEFAULT_REUSE_OPTICAL;
+    formatInputNumber(annualRevenueInput);
+    formatInputNumber(personnelCountInput);
+    formatInputNumber(salaryInput);
+    formatInputNumber(equipmentUnitsInput);
+    
+    annualRevenueInput.addEventListener('input', () => formatInputNumber(annualRevenueInput));
+    personnelCountInput.addEventListener('input', () => formatInputNumber(personnelCountInput));
+    salaryInput.addEventListener('input', () => formatInputNumber(salaryInput));
+    equipmentUnitsInput.addEventListener('input', () => formatInputNumber(equipmentUnitsInput));
+
+    // --- Add listener for personnel count input ---
+    personnelCountInput.addEventListener('input', function() {
+        const currentPersonnel = parseInt(unformatNumber(this.value)) || 0;
+        const targetSlider = document.getElementById('targetPersonnelSlider');
+        const targetValueDisplay = document.getElementById('targetPersonnelValue');
+        
+        // Update the max attribute of the target personnel slider
+        targetSlider.max = currentPersonnel;
+        
+        // If the current slider value exceeds the new max, reset it
+        if (parseInt(targetSlider.value) > currentPersonnel) {
+            targetSlider.value = currentPersonnel;
+            targetValueDisplay.textContent = currentPersonnel + '명';
+            // Optionally trigger recalculation if the value was reset
+            triggerRecalculation(); 
+        }
+    });
+
+    // --- New Calculation Logic Function ---
+    function calculateInspectionROI({
+      personnelCount = DEFAULT_PERSONNEL_COUNT,
+      salary = 25000000, // Keep default salary accessible if needed elsewhere, or hardcode
+      revenue = DEFAULT_ANNUAL_REVENUE,
+      aiUnits = DEFAULT_EQUIPMENT_UNITS,
+      useOptics = !DEFAULT_REUSE_OPTICAL, // Function uses `useOptics=true` for NEW optics
+      unitLicense = 15000000,
+      customDevCost = 100000000,
+      // Define rates within the function for clarity
+      trainingRate = 0.1,
+      misdetectRate = 0.05,
+      qualityDefectRate = 0.05, 
+      opticsCost = 40000000,
+      maintRate = 0.1,
+      laborReduction = 0.6,
+      misdetectReduction = 0.8,
+      qualityDefectReduction = 0.9,
+      targetAiPersonnel = TARGET_AI_PERSONNEL
+    }) {
+      // 1. 기존 비용 계산
+      const laborCost = personnelCount * salary;
+      const trainingCost = laborCost * trainingRate;
+      const misdetectCost = revenue * misdetectRate;
+      // Split quality/defect for potential separate display if needed, but calculation uses combined rate
+      const qualityCost = revenue * (qualityDefectRate / 2);
+      const defectCost = revenue * (qualityDefectRate / 2);
+      const currentTotalCost = laborCost + trainingCost + misdetectCost + qualityCost + defectCost;
+
+      // 2. AI 시스템 초기 도입 비용 계산
+      const opticsCostPerUnit = useOptics ? opticsCost : 0;
+      const aiUnitCost = unitLicense + opticsCostPerUnit;
+      const aiTotalUnitCost = aiUnits * aiUnitCost; // Used for maintenance base
+      const initialInvestment = aiTotalUnitCost + customDevCost;
+
+      // 3. 유지보수 비용 (2년차부터)
+      const annualMaintenanceCost = aiTotalUnitCost * maintRate; // Based on Unit+Optics, excludes custom dev
+      
+      // Current maintenance cost (for comparison)
+      const currentMaintenance = 0; // 현재 유지보수 비용 (기존 시스템이 없거나 비용을 알기 어려움)
+      const aiMaintenance = annualMaintenanceCost; // AI 시스템 유지보수 비용
+
+      // 4. AI 도입 후 비용 (감소율 적용)
+      // Calculate reduced labor based on TARGET personnel count
+      const reducedLabor = targetAiPersonnel * salary;
+      // Calculate reduced training cost based on REDUCED labor cost
+      const aiTrainingCost = reducedLabor * trainingRate;
+      const reducedMisdetect = misdetectCost * (1 - misdetectReduction);
+      const reducedQualityDefectCost = (qualityCost + defectCost) * (1 - qualityDefectReduction);
+
+      // AI Op Cost includes AI Training Cost
+      const aiTotalAnnualCostY1 = reducedLabor + aiTrainingCost + reducedMisdetect + reducedQualityDefectCost;
+      const aiTotalAnnualCostY2plus = aiTotalAnnualCostY1 + annualMaintenanceCost;
+
+      // 5. Savings calculation
+      const operationalSavingsY1 = currentTotalCost - aiTotalAnnualCostY1;
+      const operationalSavingsY2 = currentTotalCost - aiTotalAnnualCostY2plus;
+
+      const annualSavingY1 = operationalSavingsY1;
+      const annualSavingY2 = operationalSavingsY2;
+
+      // 6. ROI 계산
+      let roiYears;
+      if (initialInvestment <= 0) {
+          roiYears = 0;
+      } else if (annualSavingY1 <= 0) {
+          roiYears = Infinity;
+      } else if (annualSavingY1 >= initialInvestment) {
+          roiYears = initialInvestment / annualSavingY1;
+      } else if (annualSavingY2 > 0) {
+          const remaining = initialInvestment - annualSavingY1;
+          roiYears = 1 + (remaining / annualSavingY2);
+      } else {
+          roiYears = Infinity; // 회수 불가
+      }
+
+      let roiDisplay = '회수 불가';
+      if (roiYears === Infinity) {
+          roiDisplay = '회수 불가 (절감액 부족)';
+      } else if (roiYears <= 1) {
+          roiDisplay = roiYears.toFixed(1) + ' 년 (1년 이내)';
+      } else {
+          roiDisplay = roiYears.toFixed(1) + ' 년';
+      }
+
+      // 7. TCO 계산 (5년)
+      const currentTCO5 = currentTotalCost * 5;
+      // AI TCO: Initial + (Year 1 Cost) + (Year 2+ Cost) * 4
+      // OR: Initial + (AI Op Cost Y1 * 1) + (AI Op Cost Y2+ * 4)
+      // Using the logic from the provided spec example: Initial + (Y2+ Cost)*4
+      const aiTCO5 = initialInvestment + aiTotalAnnualCostY2plus * 4;
+
+      const tcoSaving = currentTCO5 - aiTCO5;
+      let tcoSavingRate = 0;
+       if (currentTCO5 !== 0) {
+           tcoSavingRate = (tcoSaving / currentTCO5) * 100;
+       }
+
+      return {
+        // Raw Costs
+        laborCost,
+        trainingCost,
+        misdetectCost,
+        qualityCost,
+        defectCost,
+        currentTotalCost,
+        initialInvestment,
+        annualMaintenanceCost,
+        currentMaintenance,
+        aiMaintenance,
+        // AI Costs
+        reducedLabor,
+        aiTrainingCost,
+        reducedMisdetect,
+        reducedQualityDefectCost,
+        aiTotalAnnualCostY1, // AI Op Cost Y1
+        aiTotalAnnualCostY2plus, // AI Op Cost Y2+
+        // Savings & ROI
+        annualSavingY1,
+        annualSavingY2,
+        roiYears: roiDisplay,
+        // TCO
+        tcoSaving: Math.round(tcoSaving),
+        tcoSavingRate: +tcoSavingRate.toFixed(1),
+        // Components for remarks/display
+        targetAiPersonnel,
+        salary,
+        revenue,
+        trainingRate,
+        misdetectRate,
+        qualityDefectRate,
+        maintRate,
+        reducedLabor,
+        unitLicense,
+        opticsCostPerUnit,
+        customDevCost,
+        aiTotalUnitCost
+      };
+    }
+
+    // --- Main Calculation Function (Event Handler) ---
+    function calculateROI() {
+        // --- 1. Read Inputs from DOM ---
+        const revenueEokWon = parseInt(unformatNumber(annualRevenueInput.value)) || (DEFAULT_ANNUAL_REVENUE / 100000000);
+        const revenue = revenueEokWon * 100000000;
+        
+        // Read Personnel Count - Allow 0
+        const personnelCountRaw = unformatNumber(personnelCountInput.value);
+        let personnelCount;
+        if (personnelCountRaw.trim() === '') {
+            personnelCount = DEFAULT_PERSONNEL_COUNT;
+        } else {
+            personnelCount = parseInt(personnelCountRaw);
+            if (isNaN(personnelCount) || personnelCount < 0) {
+                console.warn('Invalid personnel count input, using default.');
+                personnelCount = DEFAULT_PERSONNEL_COUNT;
+            } 
+        }
+
+        const salaryMil = parseInt(unformatNumber(salaryInput.value)) || 25;
+        const salary = salaryMil * 1000000;
+        const aiUnits = parseInt(unformatNumber(equipmentUnitsInput.value)) || DEFAULT_EQUIPMENT_UNITS;
+        const useOpticsFlag = !reuseOpticalCheckbox.checked;
+
+        // --- 2. Call Calculation Logic (using defaults for sliders initially) ---
+        const results = calculateInspectionROI({
+            personnelCount: personnelCount,
+            salary: salary,
+            revenue: revenue,
+            aiUnits: aiUnits,
+            useOptics: useOpticsFlag
+            // Slider values are taken from defaults inside calculateInspectionROI on first run
+        });
+
+        // --- 3. Make Result Sections Visible FIRST ---
+        document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('variableSlidersSection').style.display = 'block'; // Show sliders
+        document.getElementById('analysisSection41').style.display = 'block';
+
+        // --- 4. Update All Displays (Now that sections are visible) ---
+        updateAllDisplays(results, personnelCount); // Pass original personnel count for remarks
+        
+        // Set initial slider displays based on their default values
+        setInitialSliderDisplays();
+
+        // --- 5. Scroll to results ---
+        document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // --- 9. Handle Slider Interactions (Real-time Updates) ---
+    const misdetectReductionSlider = document.getElementById('misdetectReductionSlider');
+    const qualityDefectReductionSlider = document.getElementById('qualityDefectReductionSlider');
+    const targetPersonnelSlider = document.getElementById('targetPersonnelSlider');
+    
+    const misdetectReductionValue = document.getElementById('misdetectReductionValue');
+    const qualityDefectReductionValue = document.getElementById('qualityDefectReductionValue');
+    const targetPersonnelValue = document.getElementById('targetPersonnelValue');
+    
+    // Helper function to trigger recalculation
+    function triggerRecalculation() {
+        console.log("Triggering recalculation due to slider change...");
+        // Read current input values
+        const revenueEokWon = parseInt(unformatNumber(annualRevenueInput.value)) || (DEFAULT_ANNUAL_REVENUE / 100000000);
+        const revenue = revenueEokWon * 100000000;
+        
+        // Read Personnel Count - Allow 0
+        const personnelCountRaw = unformatNumber(personnelCountInput.value);
+        let personnelCount;
+        if (personnelCountRaw.trim() === '') {
+            personnelCount = DEFAULT_PERSONNEL_COUNT;
+        } else {
+            personnelCount = parseInt(personnelCountRaw);
+            if (isNaN(personnelCount) || personnelCount < 0) {
+                console.warn('Invalid personnel count input, using default.');
+                personnelCount = DEFAULT_PERSONNEL_COUNT;
+            } 
+        }
+
+        const salaryMil = parseInt(unformatNumber(salaryInput.value)) || 25;
+        const salary = salaryMil * 1000000;
+        const aiUnits = parseInt(unformatNumber(equipmentUnitsInput.value)) || DEFAULT_EQUIPMENT_UNITS;
+        const useOpticsFlag = !reuseOpticalCheckbox.checked;
+        
+        // Get slider values
+        const misdetectReduction = parseInt(misdetectReductionSlider.value) / 100;
+        const qualityDefectReduction = parseInt(qualityDefectReductionSlider.value) / 100;
+        const targetAiPersonnel = parseInt(targetPersonnelSlider.value);
+        
+        // Call calculation with custom parameters
+        const results = calculateInspectionROI({
+            personnelCount: personnelCount,
+            salary: salary,
+            revenue: revenue,
+            aiUnits: aiUnits,
+            useOptics: useOpticsFlag,
+            misdetectReduction: misdetectReduction, // Pass current slider value
+            qualityDefectReduction: qualityDefectReduction, // Pass current slider value
+            targetAiPersonnel: targetAiPersonnel // Pass current slider value
+        });
+        
+        // Update all displays and chart
+        updateAllDisplays(results, personnelCount);
+    }
+    
+    // Update display values and trigger recalculation when sliders change
+    misdetectReductionSlider.addEventListener('input', function() {
+        misdetectReductionValue.textContent = this.value + '%';
+        triggerRecalculation();
+    });
+    
+    qualityDefectReductionSlider.addEventListener('input', function() {
+        qualityDefectReductionValue.textContent = this.value + '%';
+        triggerRecalculation();
+    });
+    
+    targetPersonnelSlider.addEventListener('input', function() {
+        targetPersonnelValue.textContent = this.value + '명';
+        triggerRecalculation();
+    });
+    
+    // Function to set initial slider values display and max
+    function setInitialSliderDisplays() {
+        const currentPersonnel = parseInt(unformatNumber(personnelCountInput.value)) || DEFAULT_PERSONNEL_COUNT;
+        const targetSlider = document.getElementById('targetPersonnelSlider');
+        
+        // Set initial max value for the target personnel slider
+        targetSlider.max = currentPersonnel;
+        // Ensure initial value doesn't exceed max (though unlikely with defaults)
+        if (parseInt(targetSlider.value) > currentPersonnel) {
+            targetSlider.value = currentPersonnel;
+        }
+
+        misdetectReductionValue.textContent = misdetectReductionSlider.value + '%';
+        qualityDefectReductionValue.textContent = qualityDefectReductionSlider.value + '%';
+        targetPersonnelValue.textContent = targetSlider.value + '명'; // Use updated value if reset
+    }
+    
+    // Consolidated function to update all displays
+    function updateAllDisplays(results, personnelCount) {
+        // --- Update Summary Display --- 
+        document.getElementById('summaryInitialCost').textContent = formatWon(results.initialInvestment);
+        // Add/Update sub-text for initial investment
+        let initCostSubtext = document.getElementById('summaryInitialCostSubtext');
+        if (!initCostSubtext) {
+            initCostSubtext = document.createElement('p');
+            initCostSubtext.id = 'summaryInitialCostSubtext';
+            initCostSubtext.className = 'text-muted small mt-1 mb-0'; // Use muted text style
+            // Insert after the result item containing the initial cost
+            const initialCostItem = document.getElementById('summaryInitialCost').closest('.result-item');
+            if (initialCostItem && initialCostItem.parentNode) {
+                 initialCostItem.parentNode.insertBefore(initCostSubtext, initialCostItem.nextSibling);
+            }
+        }
+        initCostSubtext.textContent = '(참고: 초기 도입 비용은 제한적인 환경을 가정하여 계산되었습니다. 실제 구축 환경과 모델 난이도에 따라 변동될 수 있습니다.)';
+        
+        document.getElementById('summarySavingsY1').textContent = formatWon(results.annualSavingY1);
+        document.getElementById('summarySavingsY2plus').textContent = formatWon(results.annualSavingY2);
+        document.getElementById('summaryRoiPeriod').textContent = results.roiYears;
+        document.getElementById('summaryTcoSavingsAbs').textContent = formatWon(results.tcoSaving);
+        document.getElementById('summaryTcoSavingsPerc').textContent = results.tcoSavingRate + ' %';
+
+        // Initialize popovers for TCO explanation (needs to be done *after* elements are visible)
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+
+        // --- Update Detailed Analysis Table --- 
+        // Row 1: Labor
+        document.getElementById('td-current-labor').textContent = formatWon(results.laborCost);
+        document.getElementById('td-ai-labor').textContent = formatWon(results.reducedLabor);
+        document.getElementById('td-labor-savings').textContent = formatWon(results.laborCost - results.reducedLabor);
+        document.getElementById('td-labor-remarks').textContent = `인력 변화에 따른 인건비 계산 (${personnelCount}명 → ${results.targetAiPersonnel}명), 인당 ${formatWon(results.salary, false)}`;
+        // Row 2: Training
+        document.getElementById('td-current-training').textContent = formatWon(results.trainingCost);
+        document.getElementById('td-ai-training').textContent = formatWon(results.aiTrainingCost);
+        document.getElementById('td-training-savings').textContent = formatWon(results.trainingCost - results.aiTrainingCost);
+        document.getElementById('td-training-remarks').textContent = `인력 인건비의 ${results.trainingRate * 100}% 적용`;
+        // Row 3: Misdetection
+        document.getElementById('td-current-misdetection').textContent = formatWon(results.misdetectCost);
+        document.getElementById('td-ai-misdetection').textContent = formatWon(results.reducedMisdetect);
+        document.getElementById('td-misdetection-savings').textContent = formatWon(results.misdetectCost - results.reducedMisdetect);
+        document.getElementById('td-misdetect-remarks').textContent = `연 매출액 ${formatWon(results.revenue, false)}의 ${results.misdetectRate * 100}% 적용, 품질보증활동 비용`;
+        // Row 4: Quality/Defect (Combined)
+        const currentQualityDefect = results.qualityCost + results.defectCost;
+        document.getElementById('td-current-quality').textContent = formatWon(currentQualityDefect);
+        document.getElementById('td-ai-quality').textContent = formatWon(results.reducedQualityDefectCost);
+        document.getElementById('td-quality-savings').textContent = formatWon(currentQualityDefect - results.reducedQualityDefectCost);
+        document.getElementById('td-quality-remarks').textContent = `연 매출액 ${formatWon(results.revenue, false)}의 ${results.qualityDefectRate * 100}% 적용, 품질검사 관련 불량비용`;
+        // Row 5: Op Cost Subtotal
+        document.getElementById('td-current-op-total').textContent = formatWon(results.currentTotalCost);
+        document.getElementById('td-ai-op-total').textContent = formatWon(results.aiTotalAnnualCostY1);
+        document.getElementById('td-op-savings-total').textContent = formatWon(results.annualSavingY1);
+        // Row 6: Maintenance
+        document.getElementById('td-current-maintenance').textContent = formatWon(results.currentMaintenance);
+        document.getElementById('td-ai-maintenance').textContent = formatWon(results.aiMaintenance);
+        document.getElementById('td-maintenance-savings').textContent = formatWon(results.currentMaintenance - results.aiMaintenance);
+        document.getElementById('td-maintenance-remarks').textContent = `초기 시스템 도입비용의 ${results.maintRate * 100}% 적용`;
+        // Row 7: Total Cost Y1
+        document.getElementById('td-current-total-y1').textContent = formatWon(results.currentTotalCost);
+        document.getElementById('td-ai-total-y1').textContent = formatWon(results.aiTotalAnnualCostY1);
+        document.getElementById('td-netsavings-y1').textContent = formatWon(results.annualSavingY1);
+        // Row 8: Total Cost Y2+
+        document.getElementById('td-current-total-y2').textContent = formatWon(results.currentTotalCost);
+        document.getElementById('td-ai-total-y2').textContent = formatWon(results.aiTotalAnnualCostY2plus);
+        document.getElementById('td-netsavings-y2').textContent = formatWon(results.annualSavingY2);
+
+        // --- Update Percentage Changes --- 
+        function calculateAndDisplayPercentage(current, ai, elementId) {
+            const cell = document.getElementById(elementId);
+            let percentageText = 'N/A';
+            let cellClass = '';
+            if (current !== 0 && isFinite(current) && isFinite(ai)) {
+                const change = ((ai / current) - 1) * 100;
+                percentageText = change.toFixed(1) + ' %';
+                cellClass = change < 0 ? 'text-success' : (change > 0 ? 'text-danger' : '');
+            } else if (current === 0 && ai > 0) {
+                 percentageText = '+Inf %'; 
+                 cellClass = 'text-danger';
+            } else if (current === 0 && ai === 0) {
+                 percentageText = '0.0 %';
+            }
+            cell.textContent = percentageText;
+            cell.className = cellClass;
+        }
+
+        calculateAndDisplayPercentage(results.laborCost, results.reducedLabor, 'td-labor-change-perc');
+        calculateAndDisplayPercentage(results.trainingCost, results.aiTrainingCost, 'td-training-change-perc');
+        calculateAndDisplayPercentage(results.misdetectCost, results.reducedMisdetect, 'td-misdetection-change-perc');
+        calculateAndDisplayPercentage(currentQualityDefect, results.reducedQualityDefectCost, 'td-quality-change-perc');
+        calculateAndDisplayPercentage(results.currentTotalCost, results.aiTotalAnnualCostY1, 'td-op-change-perc');
+        calculateAndDisplayPercentage(results.currentTotalCost, results.aiTotalAnnualCostY1, 'td-total-y1-change-perc');
+        calculateAndDisplayPercentage(results.currentTotalCost, results.aiTotalAnnualCostY2plus, 'td-total-y2-change-perc');
+
+        // --- Update Dynamic Summary Paragraph --- 
+        let costReductionPercentText = '계산 불가';
+        if (results.currentTotalCost > 0) {
+            const reductionPercent = (results.annualSavingY1 / results.currentTotalCost) * 100;
+            costReductionPercentText = reductionPercent.toFixed(1);
+        }
+
+        let monthsText = '계산 불가';
+        if (results.roiYears && typeof results.roiYears === 'string') {
+            if (results.roiYears.includes('회수 불가') || results.roiYears.includes('Infinity')) {
+                monthsText = '회수 불가';
+            } else if (results.roiYears.includes('즉시 회수')) {
+                monthsText = '즉시';
+            } else {
+                const yearMatch = results.roiYears.match(/([0-9.]+)\s*년/);
+                if (yearMatch && yearMatch[1]) {
+                    const years = parseFloat(yearMatch[1]);
+                    monthsText = (years * 12).toFixed(1);
+                }
+            }
+        }
+
+        document.getElementById('summaryCostReductionPercent').textContent = costReductionPercentText;
+        document.getElementById('summaryMonths').textContent = monthsText;
+        document.getElementById('roiSummaryParagraph').style.display = 'block'; 
+        
+        // --- Update detailed analysis paragraph --- 
+        function calculatePercent(savings, original) {
+            if (original === 0) return "N/A";
+            return (savings / original * 100).toFixed(1);
+        }
+        
+        let analysisText = '';
+        if (results.annualSavingY1 <= 0) {
+            analysisText = '본 AI 시스템 도입은 비용 절감 효과를 기대하기 어렵습니다. 도입 전 추가 검토가 필요합니다.';
+        } else {
+            analysisText = `AI 비전 도입으로 연간 <strong>${formatWon(results.annualSavingY1)}</strong>의 비용 절감이 예상되며, `;
+            
+            // Add specific savings breakdown - Removed labor reduction
+            const qualityImprovement = calculatePercent(currentQualityDefect - results.reducedQualityDefectCost, currentQualityDefect);
+            const misdetectionReduction = calculatePercent(results.misdetectCost - results.reducedMisdetect, results.misdetectCost);
+            
+            analysisText += `주요 개선사항으로는 품질 관련 비용 <strong>${qualityImprovement}%</strong> 개선, `;
+            analysisText += `오감지 비용 <strong>${misdetectionReduction}%</strong> 절감이 포함됩니다. `;
+            
+            if (results.roiYears.includes('회수 불가')) {
+                analysisText += `투자비용 회수는 <strong>어려울 것으로</strong> 판단됩니다.`;
+            } else {
+                const yearMatch = results.roiYears.match(/([0-9.]+)/);
+                if (yearMatch && yearMatch[1]) {
+                    const roiYearsNumeric = parseFloat(yearMatch[1]);
+                    
+                    if (roiYearsNumeric > 3) {
+                        analysisText += `투자비용 회수 기간이 <strong>${results.roiYears}</strong>으로 장기 투자로 고려해야 합니다.`;
+                    } else if (roiYearsNumeric > 1.5) {
+                        analysisText += `투자비용 회수 기간은 <strong>${results.roiYears}</strong>으로 적정 수준입니다.`;
+                    } else {
+                        analysisText += `투자비용 회수 기간이 <strong>${results.roiYears}</strong>으로 매우 효과적인 투자입니다.`;
+                    }
+                } else {
+                    analysisText += `투자비용 회수 기간은 <strong>${results.roiYears}</strong>입니다.`;
+                }
+            }
+        }
+        
+        const analysisElement = document.getElementById('analysis');
+        analysisElement.innerHTML = analysisText;
+        analysisElement.style.display = 'block';
+        
+        // --- Update Chart --- 
+        createOrUpdateChart(results);
+    }
+    
+    // Function to create or update the 5-year cost chart
+    function createOrUpdateChart(results) {
+        // No longer needed here, visibility set in calculateROI
+        // document.getElementById('chartSection').style.display = 'block'; 
+        
+        // Debug logs
+        console.log('Chart container visible:', document.getElementById('analysisSection41').style.display);
+        
+        setTimeout(() => {
+            try {
+                const canvas = document.getElementById('costChart');
+                if (!canvas) {
+                    console.error('Chart canvas element not found after delay.');
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Failed to get 2D context from canvas.');
+                    return;
+                }
+                
+                console.log('Creating/Updating chart with results:', results);
+                
+                const labels = ['1년차', '2년차', '3년차', '4년차', '5년차']; // Labels for annual/cumulative data points
+                
+                // --- Calculate Annual Costs ---
+                const annualCurrentCosts = [
+                    results.currentTotalCost,
+                    results.currentTotalCost,
+                    results.currentTotalCost,
+                    results.currentTotalCost,
+                    results.currentTotalCost
+                ];
+                
+                const annualAiCosts = [
+                    results.initialInvestment + results.aiTotalAnnualCostY1, // Year 1 includes initial investment
+                    results.aiTotalAnnualCostY2plus, // Year 2+
+                    results.aiTotalAnnualCostY2plus,
+                    results.aiTotalAnnualCostY2plus,
+                    results.aiTotalAnnualCostY2plus
+                ];
+                 // Separate AI annual OpEx for clarity if needed
+                const annualAiOpEx = [
+                    results.aiTotalAnnualCostY1,
+                    results.aiTotalAnnualCostY2plus,
+                    results.aiTotalAnnualCostY2plus,
+                    results.aiTotalAnnualCostY2plus,
+                    results.aiTotalAnnualCostY2plus
+                ];
+
+                // --- Calculate Cumulative Costs ---
+                const cumulativeCurrentCosts = [0]; // Start at 0 before Year 1
+                const cumulativeAiCosts = [results.initialInvestment]; // Start with initial investment
+                
+                let breakEvenYearIndex = -1; // Index in the labels array (0 = Year 1)
+
+                for (let i = 0; i < 5; i++) {
+                    cumulativeCurrentCosts[i+1] = cumulativeCurrentCosts[i] + annualCurrentCosts[i];
+                    cumulativeAiCosts[i+1] = cumulativeAiCosts[i] + annualAiOpEx[i];
+                    
+                    // Check for crossover (first time AI cumulative is less)
+                    if (breakEvenYearIndex === -1 && cumulativeAiCosts[i+1] < cumulativeCurrentCosts[i+1]) {
+                        breakEvenYearIndex = i;
+                    }
+                }
+
+                // --- Prepare Chart Datasets ---
+                const chartData = {
+                    // Use labels for the 5 years
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: '기존 시스템 연간 비용',
+                            data: annualCurrentCosts,
+                            backgroundColor: 'rgba(255, 159, 64, 0.6)', // Orange bars
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'yAnnual' // Assign to annual axis
+                        },
+                        {
+                            type: 'bar',
+                            label: 'AI 시스템 연간 비용 (운영비)',
+                            // Show OpEx for Year 1, and OpEx+Maint for Y2+
+                            data: annualAiOpEx,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)', // Teal bars
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'yAnnual' // Assign to annual axis
+                        },
+                        {
+                            type: 'line',
+                            label: '기존 시스템 누적 비용',
+                            // Start from Year 1 data point on cumulative axis
+                            data: cumulativeCurrentCosts.slice(1), 
+                            borderColor: 'rgba(255, 99, 132, 1)', // Red line
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            yAxisID: 'yCumulative' // Assign to cumulative axis
+                        },
+                        {
+                            type: 'line',
+                            label: 'AI 시스템 누적 비용',
+                            // Start from Year 1 data point on cumulative axis
+                            data: cumulativeAiCosts.slice(1), 
+                            borderColor: 'rgba(54, 162, 235, 1)', // Blue line
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            // Highlight crossover point
+                            pointBackgroundColor: cumulativeAiCosts.slice(1).map((_, index) => 
+                                index === breakEvenYearIndex ? '#00FF00' : 'rgba(54, 162, 235, 1)' // Bright green crossover
+                            ),
+                             pointBorderColor: cumulativeAiCosts.slice(1).map((_, index) => 
+                                index === breakEvenYearIndex ? '#00AA00' : 'rgba(54, 162, 235, 1)'
+                            ),
+                            pointBorderWidth: cumulativeAiCosts.slice(1).map((_, index) => 
+                                index === breakEvenYearIndex ? 3 : 1 // Thicker border for crossover
+                            ),
+                             pointRadius: cumulativeAiCosts.slice(1).map((_, index) => 
+                                index === breakEvenYearIndex ? 7 : 4 // Larger point for crossover
+                            ),
+                            yAxisID: 'yCumulative' // Assign to cumulative axis
+                        }
+                    ]
+                };
+                
+                 // --- Chart Options --- 
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { // Ensure tooltips show for all datasets at an index
+                         mode: 'index',
+                         intersect: false,
+                     },
+                    scales: {
+                        x: {
+                             title: {
+                                 display: true,
+                                 text: '년차',
+                                 font: {
+                                     size: 14,
+                                     weight: 'bold'
+                                 }
+                             },
+                            ticks: { font: { size: 12 } }
+                         },
+                        yAnnual: { // Axis for Annual Costs (Bars)
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '연간 비용 (억원)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    const eokWon = value / 100000000;
+                                    return (eokWon % 1 === 0 ? eokWon.toFixed(0) : eokWon.toFixed(1)) + ' 억';
+                                },
+                                font: { size: 12 }
+                            },
+                            grid: {
+                                drawOnChartArea: false, // Only show grid for cumulative axis
+                             }
+                        },
+                        yCumulative: { // Axis for Cumulative Costs (Lines)
+                             type: 'linear',
+                            display: true,
+                            position: 'right', // Position on the right
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '누적 비용 (억원)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    const eokWon = value / 100000000;
+                                    return (eokWon % 1 === 0 ? eokWon.toFixed(0) : eokWon.toFixed(1)) + ' 억원';
+                                },
+                                font: { size: 12 }
+                            },
+                             grid: {
+                                 color: '#e0e0e0' // Make grid lines visible
+                             }
+                         }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '5개년 연간 및 누적 비용 비교', // Updated Title
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    let value = context.raw;
+                                    const eokWon = value / 100000000;
+                                    const formattedValue = eokWon % 1 === 0 ? eokWon.toFixed(0) : eokWon.toFixed(1);
+                                    // Special handling for initial investment if needed, but context.raw should be correct
+                                    return label + ': ' + formattedValue + ' 억원';
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                // Destroy existing chart if it exists
+                if (costChart) {
+                    costChart.destroy();
+                    costChart = null; // Ensure reference is cleared
+                }
+                
+                // Create new chart
+                costChart = new Chart(ctx, {
+                    // type: 'line', // Chart.js determines type from datasets if mixed
+                    data: chartData,
+                    options: chartOptions
+                });
+                console.log('Chart created/updated successfully:', costChart);
+                if (breakEvenYearIndex !== -1) {
+                     console.log(`Crossover point detected around Year ${breakEvenYearIndex + 1}`);
+                }
+            } catch (error) {
+                console.error('Error creating chart:', error);
+            }
+        }, 300); // Delay
+    }
+  </script>
+</body>
+</html>
+
