@@ -148,6 +148,11 @@
       </div>
   </form>
 
+    <!-- Back Button Container -->
+    <div id="backButtonContainer" class="mb-4" style="display:none;">
+         <button type="button" class="btn btn-secondary" onclick="showFormView()">&laquo; 다시 분석하기 (입력 수정)</button>
+    </div>
+
     <!-- Moved Variable Sliders Section -->
     <div id="variableSlidersSection" style="display:none;" class="mb-4">
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -610,7 +615,9 @@
             // Slider values are taken from defaults inside calculateInspectionROI on first run
         });
 
-        // --- 3. Make Result Sections Visible FIRST ---
+        // --- 3. Hide Form, Show Results & Back Button ---
+        document.getElementById('roiForm').style.display = 'none';
+        document.getElementById('backButtonContainer').style.display = 'block'; // Show Back button
         document.getElementById('resultBox').style.display = 'block';
         document.getElementById('variableSlidersSection').style.display = 'block'; // Show sliders
         document.getElementById('analysisSection41').style.display = 'block';
@@ -623,6 +630,18 @@
 
         // --- 5. Scroll to results ---
         document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // --- New function to show the form and hide results ---
+    function showFormView() {
+        document.getElementById('roiForm').style.display = 'block';
+        document.getElementById('backButtonContainer').style.display = 'none';
+        document.getElementById('resultBox').style.display = 'none';
+        document.getElementById('variableSlidersSection').style.display = 'none';
+        document.getElementById('analysisSection41').style.display = 'none';
+
+        // Optional: Scroll back to the top of the form
+        document.getElementById('roiForm').scrollIntoView({ behavior: 'smooth' });
     }
     
     // --- 9. Handle Slider Interactions (Real-time Updates) ---
