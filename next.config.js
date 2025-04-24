@@ -5,19 +5,19 @@ const nextConfig = {
     return [
       {
         // Apply these headers to all routes in your application.
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'Content-Security-Policy',
-            // WARNING: Allowing all origins ('*') can be a security risk (clickjacking).
-            // Only use this if you understand the implications.
-            value: "frame-ancestors '*'",
+            // Allow embedding from Framer subdomains and the specific RTM POC domain.
+            value: "frame-ancestors https://*.framer.app https://online-poc.rtm.ai;",
           },
           // X-Frame-Options is deprecated by CSP frame-ancestors, but some older browsers might still look for it.
           // Vercel might remove this automatically if CSP frame-ancestors is set, but being explicit can help.
           // {
           //   key: 'X-Frame-Options',
-          //   value: 'ALLOW-FROM https://*.framer.app',
+          //   // Use SAMEORIGIN or DENY, or specific URI with ALLOW-FROM (limited support)
+          //   value: 'SAMEORIGIN', // or 'DENY' or 'ALLOW-FROM https://example.com'
           // }
         ],
       },
